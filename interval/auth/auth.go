@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"neatapi/interval/common"
+	"github.com/hejingwen098/neatapi/interval/common"
 )
 
 type LoginRequest struct {
