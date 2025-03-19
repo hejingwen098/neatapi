@@ -1,0 +1,9 @@
+global:
+  auth:
+    username: username
+    password: password
+    encrypt: md5
+  neatlogic:
+    host: '127.0.0.1'
+    port: 8090
+    tenant: 'demo'
