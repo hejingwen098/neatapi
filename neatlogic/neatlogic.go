@@ -52,71 +52,24 @@ type CReturn struct {
 }
 
 type TbodyList struct {
-	CiIcon               string                          `json:"ciIcon"`
-	GlobalAttrEntityData map[string]GlobalAttrEntityData `json:"globalAttrEntityData"`
-	TypeName             string                          `json:"typeName"`
-	Type                 int64                           `json:"type"`
-	InspectStatus        string                          `json:"inspectStatus"`
-	UUID                 string                          `json:"uuid"`
-	CiName               string                          `json:"ciName"`
-	CiId                 int64                           `json:"ciId"`
-	RenewTime            string                          `json:"renewTime"`
-	MaxRelEntityCount    int                             `json:"maxRelEntityCount"`
-	RelEntityData        map[string]RelEntityDatum       `json:"relEntityData"`
-	Name                 string                          `json:"name"`
-	AttrEntityData       map[string]AttrEntityData       `json:"attrEntityData"`
-	ID                   int64                           `json:"id"`
-	MaxAttrEntityCount   int                             `json:"maxAttrEntityCount"`
-	IsVirtual            int                             `json:"isVirtual"`
-	CiLabel              string                          `json:"ciLabel"`
-	MonitorStatus        string                          `json:"monitorStatus"`
-}
-type GlobalAttrEntityData struct {
-	CiEntityId int64       `json:"ciEntityId"`
-	AttrId     int64       `json:"attrId"`
-	ValueList  []ValueItem `json:"valueList"`
-	AttrName   string      `json:"attrName"`
-	AttrLabel  string      `json:"attrLabel"`
-}
-type AttrEntityData struct {
-	CiEntityID      int64         `json:"ciEntityId"`
-	AttrID          int64         `json:"attrId"`
-	ActualValueList []interface{} `json:"actualValueList"`
-	ValueList       []interface{} `json:"valueList"`
-	Name            string        `json:"name"`
-	Label           string        `json:"label"`
-	Type            string        `json:"type"`
-	CiID            int64         `json:"ciId"`
-}
-type AttrEntity struct {
-	CiEntityId int64       `json:"ciEntityId"`
-	AttrId     int64       `json:"attrId"`
-	ValueList  []ValueItem `json:"valueList"`
-	Name       string      `json:"name"`
-	Label      string      `json:"label"`
-}
-type ValueItem struct {
-	AttrId int64  `json:"attrId"`
-	Id     int64  `json:"id"`
-	Sort   int    `json:"sort"`
-	Value  string `json:"value"`
-}
-type RelEntityDatum struct {
-	RelID      int64                     `json:"relId"`
-	CiEntityID int64                     `json:"ciEntityId"`
-	ValueList  []RelEntityDatumValueList `json:"valueList"`
-	Name       string                    `json:"name"`
-	Label      string                    `json:"label"`
-	CiLabel    string                    `json:"ciLabel"`
-	CiName     string                    `json:"ciName"`
-	Direction  string                    `json:"direction"`
-	CiID       int64                     `json:"ciId"`
-}
-type RelEntityDatumValueList struct {
-	CiEntityID   int64  `json:"ciEntityId"`
-	ID           int64  `json:"id"`
-	CiEntityName string `json:"ciEntityName"`
-	CiID         int64  `json:"ciId"`
+	CiIcon               string                 `json:"ciIcon"`
+	GlobalAttrEntityData map[string]interface{} `json:"globalAttrEntityData"`
+	TypeName             string                 `json:"typeName"`
+	Type                 int64                  `json:"type"`
+	InspectStatus        string                 `json:"inspectStatus"`
+	UUID                 string                 `json:"uuid"`
+	CiName               string                 `json:"ciName"`
+	CiId                 int64                  `json:"ciId"`
+	RenewTime            string                 `json:"renewTime"`
+	MaxRelEntityCount    int                    `json:"maxRelEntityCount"`
+	RelEntityData        map[string]interface{} `json:"relEntityData"`
+	Name                 string                 `json:"name"`
+	AttrEntityData       map[string]interface{} `json:"attrEntityData"`
+	ID                   int64                  `json:"id"`
+	MaxAttrEntityCount   int                    `json:"maxAttrEntityCount"`
+	IsVirtual            int                    `json:"isVirtual"`
+	CiLabel              string                 `json:"ciLabel"`
+	MonitorStatus        string                 `json:"monitorStatus"`
 }
 
 func NewNeatClient() *NeatClient {
