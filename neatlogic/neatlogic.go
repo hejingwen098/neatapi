@@ -1,29 +1,236 @@
 package neatlogic
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/hejingwen098/neatapi/auth"
+	"github.com/hejingwen098/neatapi/common"
 )
 
-type LoginRequest struct {
+// NeatLogic Login 结构体
+type LRequest struct {
 	UserID   string `json:"userid"`
 	Password string `json:"password"`
 }
 
-type LoginResponse struct {
+type LResponse struct {
 	Status   string `json:"Status"`
 	Message  string `json:"Message"`
 	JwtToken string `json:"JwtToken"`
 }
+type NeatClient struct {
+	Client       *http.Client
+	NeatlogicUri string
+	JwtToken     string
+}
 
-func SendRequest(req *http.Request, JwtToken string) ([]byte, error) {
-	client := &http.Client{}
+// CMDB Cientity 结构体
+type CRequest struct {
+	CiId        int    `json:"ciId"`
+	CiEntityId  int    `json:"ciEntityId"`
+	Keyword     string `json:"keyword"`
+	PageSize    int    `json:"pageSize"`
+	CurrentPage int    `json:"currentPage"`
+}
+
+type CResponse struct {
+	Status   string  `json:"Status"`
+	CReturn  CReturn `json:"Return"`
+	TimeCost int64   `json:"TimeCost"`
+}
+
+type CReturn struct {
+	PageCount   int         `json:"pageCount"`
+	RowNum      int         `json:"rowNum"`
+	PageSize    int         `json:"pageSize"`
+	CurrentPage int         `json:"currentPage"`
+	TbodyList   []TbodyList `json:"tbodyList"`
+}
+
+type TbodyList struct {
+	CiIcon               string                          `json:"ciIcon"`
+	GlobalAttrEntityData map[string]GlobalAttrEntityData `json:"globalAttrEntityData"`
+	TypeName             string                          `json:"typeName"`
+	Type                 int64                           `json:"type"`
+	InspectStatus        string                          `json:"inspectStatus"`
+	UUID                 string                          `json:"uuid"`
+	CiName               string                          `json:"ciName"`
+	CiId                 int64                           `json:"ciId"`
+	RenewTime            string                          `json:"renewTime"`
+	MaxRelEntityCount    int                             `json:"maxRelEntityCount"`
+	RelEntityData        map[string]RelEntityDatum       `json:"relEntityData"`
+	Name                 string                          `json:"name"`
+	AttrEntityData       map[string]AttrEntityData       `json:"attrEntityData"`
+	ID                   int64                           `json:"id"`
+	MaxAttrEntityCount   int                             `json:"maxAttrEntityCount"`
+	IsVirtual            int                             `json:"isVirtual"`
+	CiLabel              string                          `json:"ciLabel"`
+	MonitorStatus        string                          `json:"monitorStatus"`
+}
+type GlobalAttrEntityData struct {
+	CiEntityId int64       `json:"ciEntityId"`
+	AttrId     int64       `json:"attrId"`
+	ValueList  []ValueItem `json:"valueList"`
+	AttrName   string      `json:"attrName"`
+	AttrLabel  string      `json:"attrLabel"`
+}
+type AttrEntityData struct {
+	CiEntityID      int64         `json:"ciEntityId"`
+	AttrID          int64         `json:"attrId"`
+	ActualValueList []interface{} `json:"actualValueList"`
+	ValueList       []interface{} `json:"valueList"`
+	Name            string        `json:"name"`
+	Label           string        `json:"label"`
+	Type            string        `json:"type"`
+	CiID            int64         `json:"ciId"`
+}
+type AttrEntity struct {
+	CiEntityId int64       `json:"ciEntityId"`
+	AttrId     int64       `json:"attrId"`
+	ValueList  []ValueItem `json:"valueList"`
+	Name       string      `json:"name"`
+	Label      string      `json:"label"`
+}
+type ValueItem struct {
+	AttrId int64  `json:"attrId"`
+	Id     int64  `json:"id"`
+	Sort   int    `json:"sort"`
+	Value  string `json:"value"`
+}
+type RelEntityDatum struct {
+	RelID      int64                     `json:"relId"`
+	CiEntityID int64                     `json:"ciEntityId"`
+	ValueList  []RelEntityDatumValueList `json:"valueList"`
+	Name       string                    `json:"name"`
+	Label      string                    `json:"label"`
+	CiLabel    string                    `json:"ciLabel"`
+	CiName     string                    `json:"ciName"`
+	Direction  string                    `json:"direction"`
+	CiID       int64                     `json:"ciId"`
+}
+type RelEntityDatumValueList struct {
+	CiEntityID   int64  `json:"ciEntityId"`
+	ID           int64  `json:"id"`
+	CiEntityName string `json:"ciEntityName"`
+	CiID         int64  `json:"ciId"`
+}
+
+func NewNeatClient() *NeatClient {
+	token, err := auth.Login()
+	if err != nil {
+		panic(err)
+	}
+	return &NeatClient{
+		Client:       &http.Client{},
+		NeatlogicUri: common.NeatlogicUri,
+		JwtToken:     token,
+	}
+}
+
+func (c *NeatClient) GetAllCientity(ciId int) ([]TbodyList, error) {
+	var allCientity []TbodyList
+	currentPage := 1
+
+	for {
+		url := fmt.Sprintf("%s/api/rest/cmdb/cientity/search", c.NeatlogicUri)
+		reqbody := CRequest{
+			CiId:        ciId,
+			CurrentPage: currentPage,
+			PageSize:    10,
+		}
+		jsonData, err := json.Marshal(reqbody)
+		if err != nil {
+			return nil, err
+		}
+
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := c.SendRequest(req)
+		if err != nil {
+			return nil, err
+		}
+		var respBody CResponse
+		if err := json.Unmarshal(resp, &respBody); err != nil {
+			return nil, err
+		}
+		allCientity = append(allCientity, respBody.CReturn.TbodyList...)
+		if currentPage >= respBody.CReturn.PageCount {
+			break
+		}
+		currentPage++
+	}
+	return allCientity, nil
+}
+func (c *NeatClient) SearchCientity(ciId int, keyword string) ([]TbodyList, error) {
+	var allCientity []TbodyList
+	currentPage := 1
+
+	for {
+		url := fmt.Sprintf("%s/api/rest/cmdb/cientity/search", c.NeatlogicUri)
+
+		// 构建请求body
+		reqbody := CRequest{
+			CiId:    ciId,
+			Keyword: keyword,
+		}
+		jsonData, err := json.Marshal(reqbody)
+		if err != nil {
+			return nil, err
+		}
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SendRequest(req)
+		if err != nil {
+			return nil, err
+		}
+		var respBody CResponse
+		if err := json.Unmarshal(resp, &respBody); err != nil {
+			return nil, err
+		}
+		allCientity = append(allCientity, respBody.CReturn.TbodyList...)
+		if currentPage >= respBody.CReturn.PageCount {
+			break
+		}
+		currentPage++
+	}
+
+	return allCientity, nil
+}
+
+func (c *NeatClient) GetCientity(ciId int, ciEntityId int) ([]byte, error) {
+	url := fmt.Sprintf("%s/api/rest/cmdb/cientity/get", c.NeatlogicUri)
+
+	// 构建请求body
+	reqbody := CRequest{
+		CiId:       ciId,
+		CiEntityId: ciEntityId,
+	}
+	jsonData, err := json.Marshal(reqbody)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	return c.SendRequest(req)
+}
+func (c *NeatClient) SendRequest(req *http.Request) ([]byte, error) {
 	// 设置JWT认证头
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+JwtToken)
+	req.Header.Set("Authorization", "Bearer "+c.JwtToken)
 
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
