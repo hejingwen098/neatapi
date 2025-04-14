@@ -206,7 +206,7 @@ func (c *NeatClient) SearchCientity(ciId int, keyword string) ([]TbodyList, erro
 	return allCientity, nil
 }
 
-func (c *NeatClient) GetCientity(ciId int, ciEntityId int) ([]byte, error) {
+func (c *NeatClient) GetCientity(ciId int, ciEntityId int) ([]TbodyList, error) {
 	url := fmt.Sprintf("%s/api/rest/cmdb/cientity/get", c.NeatlogicUri)
 
 	// 构建请求body
@@ -222,8 +222,15 @@ func (c *NeatClient) GetCientity(ciId int, ciEntityId int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return c.SendRequest(req)
+	resp, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var respBody CResponse
+	if err := json.Unmarshal(resp, &respBody); err != nil {
+		return nil, err
+	}
+	return respBody.CReturn.TbodyList, nil
 }
 func (c *NeatClient) SendRequest(req *http.Request) ([]byte, error) {
 	// 设置JWT认证头
