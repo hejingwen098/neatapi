@@ -70,6 +70,7 @@ type TbodyList struct {
 	IsVirtual            int                    `json:"isVirtual"`
 	CiLabel              string                 `json:"ciLabel"`
 	MonitorStatus        string                 `json:"monitorStatus"`
+	AuthData             map[string]bool        `json:"authData"`
 }
 
 func NewNeatClient() *NeatClient {
