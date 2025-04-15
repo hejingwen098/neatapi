@@ -29,6 +29,22 @@ type NeatClient struct {
 }
 
 // CMDB Cientity 结构体
+type CRequestBody struct {
+	PageSize       int    `json:"pageSize"`
+	CiId           int    `json:"ciId"`
+	NeedAction     bool   `json:"needAction"`
+	NeedExpand     bool   `json:"needExpand"`
+	NeedActionType bool   `json:"needActionType"`
+	NeedCheck      bool   `json:"needCheck"`
+	Mode           string `json:"mode"`
+	CurrentPage    int    `json:"currentPage"`
+	// What J8 struct is this
+	AttrFilterList       map[string]interface{} `json:"attrFilterList"`
+	GlobalAttrFilterList map[string]interface{} `json:"globalAttrFilterList"`
+	RelFilterList        map[string]interface{} `json:"relFilterList"`
+	Keyword              string                 `json:"keyword"`
+}
+
 type CRequest struct {
 	CiId        int    `json:"ciId"`
 	CiEntityId  int    `json:"ciEntityId"`
@@ -94,7 +110,7 @@ func (c *NeatClient) GetAllCientity(ciId int) ([]TbodyList, error) {
 		reqbody := CRequest{
 			CiId:        ciId,
 			CurrentPage: currentPage,
-			PageSize:    10,
+			PageSize:    100,
 		}
 		jsonData, err := json.Marshal(reqbody)
 		if err != nil {
@@ -122,7 +138,42 @@ func (c *NeatClient) GetAllCientity(ciId int) ([]TbodyList, error) {
 	}
 	return allCientity, nil
 }
-func (c *NeatClient) SearchCientity(ciId int, keyword string) ([]TbodyList, error) {
+
+// 垃圾请求body，想用自己拼吧，爷不伺候
+func (c *NeatClient) SearchCientityByFilter(repbody CRequestBody) ([]TbodyList, error) {
+	var allCientity []TbodyList
+	currentPage := 1
+
+	for {
+		url := fmt.Sprintf("%s/api/rest/cmdb/cientity/search", c.NeatlogicUri)
+
+		jsonData, err := json.Marshal(repbody)
+		if err != nil {
+			return nil, err
+		}
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SendRequest(req)
+		if err != nil {
+			return nil, err
+		}
+		var respBody CResponse
+		if err := json.Unmarshal(resp, &respBody); err != nil {
+			return nil, err
+		}
+		allCientity = append(allCientity, respBody.CReturn.TbodyList...)
+		if currentPage >= respBody.CReturn.PageCount {
+			break
+		}
+		currentPage++
+	}
+
+	return allCientity, nil
+}
+
+func (c *NeatClient) SearchCientityByKeyword(ciId int, keyword string) ([]TbodyList, error) {
 	var allCientity []TbodyList
 	currentPage := 1
 
