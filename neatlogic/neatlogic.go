@@ -39,10 +39,10 @@ type CRequestBody struct {
 	Mode           string `json:"mode"`
 	CurrentPage    int    `json:"currentPage"`
 	// What J8 struct is this
-	AttrFilterList       map[string]interface{} `json:"attrFilterList"`
-	GlobalAttrFilterList map[string]interface{} `json:"globalAttrFilterList"`
-	RelFilterList        map[string]interface{} `json:"relFilterList"`
-	Keyword              string                 `json:"keyword"`
+	AttrFilterList       []map[string]interface{} `json:"attrFilterList"`
+	GlobalAttrFilterList []map[string]interface{} `json:"globalAttrFilterList"`
+	RelFilterList        []map[string]interface{} `json:"relFilterList"`
+	Keyword              string                   `json:"keyword"`
 }
 
 type CRequest struct {
