@@ -140,14 +140,14 @@ func (c *NeatClient) GetAllCientity(ciId int) ([]TbodyList, error) {
 }
 
 // 垃圾请求body，想用自己拼吧，爷不伺候
-func (c *NeatClient) SearchCientityByFilter(repbody CRequestBody) ([]TbodyList, error) {
+func (c *NeatClient) SearchCientityByFilter(reqbody CRequestBody) ([]TbodyList, error) {
 	var allCientity []TbodyList
 	currentPage := 1
 
 	for {
 		url := fmt.Sprintf("%s/api/rest/cmdb/cientity/search", c.NeatlogicUri)
-
-		jsonData, err := json.Marshal(repbody)
+		reqbody.CurrentPage = currentPage
+		jsonData, err := json.Marshal(reqbody)
 		if err != nil {
 			return nil, err
 		}
@@ -182,8 +182,9 @@ func (c *NeatClient) SearchCientityByKeyword(ciId int, keyword string) ([]TbodyL
 
 		// 构建请求body
 		reqbody := CRequest{
-			CiId:    ciId,
-			Keyword: keyword,
+			CiId:        ciId,
+			CurrentPage: currentPage,
+			Keyword:     keyword,
 		}
 		jsonData, err := json.Marshal(reqbody)
 		if err != nil {
