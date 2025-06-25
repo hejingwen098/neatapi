@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/hejingwen098/neatapi/auth"
 	"github.com/hejingwen098/neatapi/common"
@@ -60,6 +61,8 @@ type CResponse struct {
 }
 
 type CReturn struct {
+	Name        string      `json:"name"`
+	ID          int64       `json:"id"`
 	PageCount   int         `json:"pageCount"`
 	RowNum      int         `json:"rowNum"`
 	PageSize    int         `json:"pageSize"`
@@ -87,6 +90,17 @@ type TbodyList struct {
 	CiLabel              string                 `json:"ciLabel"`
 	MonitorStatus        string                 `json:"monitorStatus"`
 	AuthData             map[string]bool        `json:"authData"`
+}
+
+type AResponse struct {
+	Status   string    `json:"Status"`
+	AReturn  []AReturn `json:"Return"`
+	TimeCost int64     `json:"TimeCost"`
+}
+
+type AReturn struct {
+	Name string `json:"name"`
+	ID   int64  `json:"id"`
 }
 
 func NewNeatClient() *NeatClient {
@@ -267,4 +281,32 @@ func ParseResourceResponse(resp *http.Response) ([]byte, error) {
 		return nil, err
 	}
 	return respBody, nil
+}
+
+func (c *NeatClient) SearchTargetAttr(reqbody CRequestBody, attrId string) ([]AReturn, error) {
+	// 这个函数是用来搜索目标属性的
+	// 需要传入一个请求体(包含keyword即可)和属性ID
+	apiurl := fmt.Sprintf("%s/api/rest/cmdb/attr/targetci/search", c.NeatlogicUri)
+	parmas := url.Values{}
+	parmas.Add("attrId", attrId)
+	reqbody.CurrentPage = 1
+	reqbody.PageSize = 20
+	jsonData, err := json.Marshal(reqbody)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", apiurl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	var respBody AResponse
+	if err := json.Unmarshal(resp, &respBody); err != nil {
+		return nil, err
+	}
+
+	return respBody.AReturn, nil
 }
