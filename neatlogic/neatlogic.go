@@ -289,13 +289,11 @@ func (c *NeatClient) SearchTargetAttr(reqbody CRequestBody, attrId string) ([]AR
 	apiurl := fmt.Sprintf("%s/api/rest/cmdb/attr/targetci/search", c.NeatlogicUri)
 	parmas := url.Values{}
 	parmas.Add("attrId", attrId)
-	reqbody.CurrentPage = 1
-	reqbody.PageSize = 20
 	jsonData, err := json.Marshal(reqbody)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", apiurl, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", apiurl+"?"+parmas.Encode(), bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
 	}
