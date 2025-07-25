@@ -47,11 +47,13 @@ type CRequestBody struct {
 }
 
 type CRequest struct {
-	CiId        int    `json:"ciId"`
-	CiEntityId  int    `json:"ciEntityId"`
-	Keyword     string `json:"keyword"`
-	PageSize    int    `json:"pageSize"`
-	CurrentPage int    `json:"currentPage"`
+	CiId            int64  `json:"ciId"`
+	CiEntityId      int64  `json:"ciEntityId"`
+	Keyword         string `json:"keyword"`
+	PageSize        int    `json:"pageSize"`
+	CurrentPage     int    `json:"currentPage"`
+	LimitRelEntity  bool   `json:"limitRelEntity"`
+	LimitAttrEntity bool   `json:"limitAttrEntity"`
 }
 
 type CResponse struct {
@@ -70,6 +72,11 @@ type CReturn struct {
 	TbodyList   []TbodyList `json:"tbodyList"`
 }
 
+type GetCientityResponse struct {
+	Status            string    `json:"Status"`
+	GetcientityReturn TbodyList `json:"Return"`
+	TimeCost          int64     `json:"TimeCost"`
+}
 type TbodyList struct {
 	CiIcon               string                 `json:"ciIcon"`
 	GlobalAttrEntityData map[string]interface{} `json:"globalAttrEntityData"`
@@ -115,7 +122,7 @@ func NewNeatClient() *NeatClient {
 	}
 }
 
-func (c *NeatClient) GetAllCientity(ciId int) ([]TbodyList, error) {
+func (c *NeatClient) GetAllCientity(ciId int64) ([]TbodyList, error) {
 	var allCientity []TbodyList
 	currentPage := 1
 
@@ -187,7 +194,7 @@ func (c *NeatClient) SearchCientityByFilter(reqbody CRequestBody) ([]TbodyList, 
 	return allCientity, nil
 }
 
-func (c *NeatClient) SearchCientityByKeyword(ciId int, keyword string) ([]TbodyList, error) {
+func (c *NeatClient) SearchCientityByKeyword(ciId int64, keyword string) ([]TbodyList, error) {
 	var allCientity []TbodyList
 	currentPage := 1
 
@@ -226,31 +233,34 @@ func (c *NeatClient) SearchCientityByKeyword(ciId int, keyword string) ([]TbodyL
 	return allCientity, nil
 }
 
-func (c *NeatClient) GetCientity(ciId int, ciEntityId int) ([]TbodyList, error) {
+func (c *NeatClient) GetCientity(ciId int64, ciEntityId int64) (TbodyList, error) {
+	// 不限制RelEntity和AttrEntity
 	url := fmt.Sprintf("%s/api/rest/cmdb/cientity/get", c.NeatlogicUri)
 
 	// 构建请求body
 	reqbody := CRequest{
-		CiId:       ciId,
-		CiEntityId: ciEntityId,
+		CiId:            ciId,
+		CiEntityId:      ciEntityId,
+		LimitRelEntity:  false,
+		LimitAttrEntity: false,
 	}
 	jsonData, err := json.Marshal(reqbody)
 	if err != nil {
-		return nil, err
+		return TbodyList{}, err
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, err
+		return TbodyList{}, err
 	}
 	resp, err := c.SendRequest(req)
 	if err != nil {
-		return nil, err
+		return TbodyList{}, err
 	}
-	var respBody CResponse
+	var respBody GetCientityResponse
 	if err := json.Unmarshal(resp, &respBody); err != nil {
-		return nil, err
+		return TbodyList{}, err
 	}
-	return respBody.CReturn.TbodyList, nil
+	return respBody.GetcientityReturn, nil
 }
 func (c *NeatClient) SendRequest(req *http.Request) ([]byte, error) {
 	// 设置JWT认证头
